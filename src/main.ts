@@ -23,7 +23,7 @@ app.innerHTML = `
       </nav>
       <div class="sidebar-foot">
         <span id="admin-badge" class="badge">…</span>
-        <span class="version muted">v0.1.0</span>
+        <span class="version muted">v0.1.1</span>
       </div>
     </aside>
     <main class="content" id="content"></main>

@@ -80,6 +80,26 @@ pnpm tauri build
 
 > 提示：首次 `cargo build` 需要编译大量依赖，耗时较长属正常现象。
 
+### 🚢 自动发布新版本（GitHub Actions）
+
+仓库已配置 `.github/workflows/release.yml`：**推送 `v*` 标签**后，GitHub Actions 会在 Windows 运行器上自动执行 `pnpm tauri build` 并创建带安装包的 Release。发布流程：
+
+```bash
+# 1. 升级版本号（三处保持一致）
+#    package.json / src-tauri/tauri.conf.json / src-tauri/Cargo.toml（Cargo.lock 会自动更新）
+#    例：0.1.1 → 0.2.0
+
+# 2. 提交并推送
+git add -A && git commit -m "chore: release v0.2.0"
+git push
+
+# 3. 打标签并推送（触发自动构建）
+git tag v0.2.0
+git push origin v0.2.0
+```
+
+稍等几分钟，GitHub Releases 页面（`https://github.com/jianyunyi/elimitate/releases`）即会出现新版本安装包。
+
 ---
 
 ## 📁 项目结构

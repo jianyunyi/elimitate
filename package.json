@@ -1,9 +1,10 @@
 {
   "name": "elimitate",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "description": "开源的 Windows 电脑清理与卸载残留清除工具",
+  "packageManager": "pnpm@10.27.0",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
