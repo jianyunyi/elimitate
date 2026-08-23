@@ -6,14 +6,21 @@ use winreg::enums::*;
 use winreg::RegKey;
 
 use super::{parse_hive_path, DeleteReport, ResidueItem, UninstallResult};
-use crate::util;
+use crate::util::{self, LockTracker};
 
 #[tauri::command]
-pub fn delete_residue(_app_key: String, items: Vec<ResidueItem>) -> Result<DeleteReport, String> {
+pub fn delete_residue(
+    _app_key: String,
+    items: Vec<ResidueItem>,
+    to_recycle_bin: bool,
+) -> Result<DeleteReport, String> {
+    let mut locked = LockTracker::default();
     let mut report = DeleteReport {
         deleted: 0,
         failed: 0,
         bytes_freed: 0,
+        locked: 0,
+        locked_paths: Vec::new(),
         errors: Vec::new(),
     };
 
@@ -22,7 +29,8 @@ pub fn delete_residue(_app_key: String, items: Vec<ResidueItem>) -> Result<Delet
             "registry_key" => delete_registry_key(&it.path),
             "registry_value" => delete_registry_value(&it.path),
             _ => {
-                let (freed, items_removed) = util::delete_path_force(Path::new(&it.path), &mut report.errors);
+                let (freed, items_removed) =
+                    util::delete_path_force(Path::new(&it.path), to_recycle_bin, &mut report.errors, &mut locked);
                 if items_removed > 0 {
                     Ok(freed)
                 } else {
@@ -41,6 +49,34 @@ pub fn delete_residue(_app_key: String, items: Vec<ResidueItem>) -> Result<Delet
             }
         }
     }
+    report.locked = locked.count;
+    report.locked_paths = locked.samples;
+    Ok(report)
+}
+
+/// 通用批量删除（供大文件页等使用）
+#[tauri::command]
+pub fn delete_paths(paths: Vec<String>, to_recycle_bin: bool) -> Result<DeleteReport, String> {
+    let mut locked = LockTracker::default();
+    let mut report = DeleteReport {
+        deleted: 0,
+        failed: 0,
+        bytes_freed: 0,
+        locked: 0,
+        locked_paths: Vec::new(),
+        errors: Vec::new(),
+    };
+    for p in &paths {
+        let (freed, items) = util::delete_path_force(Path::new(p), to_recycle_bin, &mut report.errors, &mut locked);
+        if items > 0 {
+            report.deleted += 1;
+            report.bytes_freed += freed;
+        } else {
+            report.failed += 1;
+        }
+    }
+    report.locked = locked.count;
+    report.locked_paths = locked.samples;
     Ok(report)
 }
 

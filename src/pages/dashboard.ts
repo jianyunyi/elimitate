@@ -33,6 +33,10 @@ export function renderDashboard(container: HTMLElement): void {
         </div>
         <div class="clean-cta">
           <button id="btn-clean-all" class="btn btn-primary btn-lg">🧹 一键清理</button>
+          <label class="inline-opt toggle-opt">
+            <input type="checkbox" id="clean-all-recycle" checked />
+            🗑️ 删除到回收站（可恢复）
+          </label>
         </div>
       </div>
     </div>
@@ -105,12 +109,17 @@ async function runCleanAll(container: HTMLElement): Promise<void> {
   });
 
   try {
-    const reports = await cleanAll();
+    const toRecycleBin = container.querySelector<HTMLInputElement>("#clean-all-recycle")!.checked;
+    const reports = await cleanAll(toRecycleBin);
     const freed = reports.reduce((a, r) => a + r.bytesFreed, 0);
     const items = reports.reduce((a, r) => a + r.itemsRemoved, 0);
     const errors = reports.reduce((a, r) => a + r.errors.length, 0);
-    label.textContent = `完成：共清理 ${items} 项，释放 ${formatBytes(freed)}${errors ? `，${errors} 项失败（可能被占用或需要更高权限）` : ""}`;
-    toast(`一键清理完成，释放 ${formatBytes(freed)}`, errors > 0 ? "info" : "success", 5000);
+    const locked = reports.reduce((a, r) => a + r.locked, 0);
+    let msg = `完成：共清理 ${items} 项，释放 ${formatBytes(freed)}`;
+    if (locked > 0) msg += `，${locked} 项被占用已跳过`;
+    if (errors > 0) msg += `，${errors} 项失败（可能需要更高权限）`;
+    label.textContent = msg;
+    toast(msg, errors > 0 ? "error" : locked > 0 ? "info" : "success", 5000);
     loadSystemInfo(container);
   } catch (e) {
     toast(`一键清理失败：${e}`, "error", 5000);

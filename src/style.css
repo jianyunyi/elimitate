@@ -699,6 +699,106 @@ body {
   gap: 10px;
 }
 
+/* ---------- 行内选项 / 开关 ---------- */
+.inline-opt {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 13px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 12px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.inline-opt select {
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 3px 6px;
+  font-size: 13px;
+  outline: none;
+}
+
+.toggle-opt input {
+  accent-color: var(--accent);
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+}
+
+/* ---------- 大文件分析 ---------- */
+.lf-card {
+  padding: 8px 12px;
+}
+
+.lf-table-wrap {
+  max-height: calc(100vh - 280px);
+  overflow-y: auto;
+}
+
+.lf-head,
+.lf-row {
+  display: grid;
+  grid-template-columns: 52px 110px 1fr 110px;
+  gap: 10px;
+  align-items: center;
+  padding: 8px 10px;
+  font-size: 13px;
+}
+
+.lf-head {
+  color: var(--muted);
+  font-size: 12px;
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  background: var(--card);
+}
+
+.lf-row {
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background 0.12s;
+}
+
+.lf-row:hover {
+  background: var(--bg-soft);
+}
+
+.lf-row input {
+  accent-color: var(--accent);
+}
+
+.lf-rank {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.lf-size {
+  font-weight: 700;
+  color: var(--yellow);
+  white-space: nowrap;
+}
+
+.lf-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  user-select: text;
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 12px;
+}
+
+.lf-mod {
+  font-size: 12px;
+  white-space: nowrap;
+}
+
 /* ---------- 滚动条 ---------- */
 ::-webkit-scrollbar {
   width: 10px;

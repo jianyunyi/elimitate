@@ -194,6 +194,10 @@ function renderResidue(name: string, totalSize: number): void {
       <div class="residue-actions">
         <button id="btn-res-select-all" class="btn btn-ghost btn-sm">全选</button>
         <button id="btn-res-select-safe" class="btn btn-ghost btn-sm">仅选低/中风险</button>
+        <label class="inline-opt toggle-opt btn-sm">
+          <input type="checkbox" id="residue-recycle" checked />
+          🗑️ 进回收站
+        </label>
         <button id="btn-res-delete" class="btn btn-danger btn-sm">🗑️ 删除选中</button>
       </div>
     </div>
@@ -213,12 +217,18 @@ function renderResidue(name: string, totalSize: number): void {
     const checkedItems = residue.filter((r) => checkedPaths.includes(r.path));
     if (checkedItems.length === 0) return;
     const highChecked = checkedItems.filter((r) => r.risk === "high").length;
+    const toRecycleBin = area.querySelector<HTMLInputElement>("#residue-recycle")!.checked;
     const warn = highChecked > 0 ? `\n\n⚠️ 其中包含 ${highChecked} 项高风险项（可能被其他软件共用），请确认无误。` : "";
-    const ok = await confirmDialog(`确认删除选中的 ${checkedItems.length} 项残留？`, `删除后不可恢复。${warn}`);
+    const ok = await confirmDialog(
+      `确认删除选中的 ${checkedItems.length} 项残留？`,
+      `${toRecycleBin ? "文件类将移入回收站（可恢复）；注册表项直接删除。" : "⚠️ 文件将被永久删除，不可恢复！注册表项直接删除。"}${warn}`,
+    );
     if (!ok) return;
     try {
-      const r = await deleteResidue(selectedKey!, checkedItems);
-      toast(`删除完成：成功 ${r.deleted} 项，失败 ${r.failed} 项，释放 ${formatBytes(r.bytesFreed)}`, r.failed > 0 ? "info" : "success", 5000);
+      const r = await deleteResidue(selectedKey!, checkedItems, toRecycleBin);
+      let msg = `删除完成：成功 ${r.deleted} 项，失败 ${r.failed} 项，释放 ${formatBytes(r.bytesFreed)}`;
+      if (r.locked > 0) msg += `，${r.locked} 项被占用已跳过`;
+      toast(msg, r.failed > 0 ? "error" : r.locked > 0 ? "info" : "success", 5000);
       residue = residue.filter((item) => !checkedPaths.includes(item.path));
       renderResidue(name, residue.filter((i) => i.sizeBytes > 0).reduce((a, i) => a + i.sizeBytes, 0));
       if (r.errors.length > 0) {

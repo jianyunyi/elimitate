@@ -1,6 +1,6 @@
 [package]
 name = "elimitate"
-version = "0.1.1"
+version = "0.2.0"
 description = "开源的 Windows 电脑清理与卸载残留清除工具"
 authors = ["Elimitate Contributors"]
 edition = "2021"
@@ -32,6 +32,7 @@ windows-sys = { version = "0.61", features = [
   "Wdk_System_SystemServices",
 ] }
 walkdir = "2.5"
+jwalk = "0.8"
 dirs = "6"
 
 [profile.release]

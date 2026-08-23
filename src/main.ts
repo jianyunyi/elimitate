@@ -1,6 +1,7 @@
 import { systemInfo } from "./api";
 import { renderDashboard } from "./pages/dashboard";
 import { renderJunk } from "./pages/junk";
+import { renderLargeFiles } from "./pages/largefiles";
 import { renderUninstall } from "./pages/uninstall";
 import "./style.css";
 
@@ -19,11 +20,12 @@ app.innerHTML = `
       <nav class="nav">
         <button class="nav-item active" data-page="dashboard">⚡ 一键清理</button>
         <button class="nav-item" data-page="junk">🗑️ 垃圾清理</button>
+        <button class="nav-item" data-page="largefiles">📁 大文件分析</button>
         <button class="nav-item" data-page="uninstall">📦 软件卸载</button>
       </nav>
       <div class="sidebar-foot">
         <span id="admin-badge" class="badge">…</span>
-        <span class="version muted">v0.1.1</span>
+        <span class="version muted">v0.2.0</span>
       </div>
     </aside>
     <main class="content" id="content"></main>
@@ -33,6 +35,7 @@ app.innerHTML = `
 const pages: Record<string, (el: HTMLElement) => void> = {
   dashboard: renderDashboard,
   junk: renderJunk,
+  largefiles: renderLargeFiles,
   uninstall: renderUninstall,
 };
 

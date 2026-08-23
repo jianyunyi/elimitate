@@ -20,6 +20,21 @@ export function renderJunk(container: HTMLElement): void {
       <button id="btn-clean" class="btn btn-danger" disabled>🗑️ 清理选中</button>
       <button id="btn-select-all" class="btn btn-ghost">全选</button>
       <button id="btn-select-none" class="btn btn-ghost">清空</button>
+      <label class="inline-opt">
+        仅清理
+        <select id="age-filter">
+          <option value="">全部</option>
+          <option value="7">7 天前</option>
+          <option value="30">30 天前</option>
+          <option value="90">90 天前</option>
+          <option value="180">180 天前</option>
+        </select>
+        修改的文件
+      </label>
+      <label class="inline-opt toggle-opt">
+        <input type="checkbox" id="recycle-toggle" checked />
+        🗑️ 删除到回收站（可恢复）
+      </label>
     </div>
     <div class="progress-wrap" id="junk-progress" hidden>
       <div class="progress-track"><div class="progress-fill" id="junk-progress-fill" style="width:0%"></div></div>
@@ -35,6 +50,11 @@ export function renderJunk(container: HTMLElement): void {
   const fill = container.querySelector<HTMLElement>("#junk-progress-fill")!;
   const label = container.querySelector<HTMLElement>("#junk-progress-label")!;
 
+  const ageFilter = () => {
+    const v = container.querySelector<HTMLSelectElement>("#age-filter")!.value;
+    return v === "" ? null : Number(v);
+  };
+
   container.querySelector("#btn-scan")!.addEventListener("click", async () => {
     if (scanning) return;
     scanning = true;
@@ -46,7 +66,7 @@ export function renderJunk(container: HTMLElement): void {
       label.textContent = `扫描：${p.categoryName}（${p.done}/${p.total}）`;
     });
     try {
-      categories = await scanJunk();
+      categories = await scanJunk(ageFilter());
       renderList();
       progressWrap.hidden = true;
       const total = categories.reduce((a, c) => a + c.sizeBytes, 0);
@@ -65,9 +85,12 @@ export function renderJunk(container: HTMLElement): void {
     const ids = selectedIds();
     if (ids.length === 0) return;
     const total = categories.filter((c) => ids.includes(c.id)).reduce((a, c) => a + c.sizeBytes, 0);
+    const toRecycleBin = container.querySelector<HTMLInputElement>("#recycle-toggle")!.checked;
+    const days = ageFilter();
+    const ageText = days ? `仅清理 ${days} 天前修改的文件。` : "";
     const ok = await confirmDialog(
       `确认清理选中的 ${ids.length} 个类别？`,
-      `预计可释放 ${formatBytes(total)}。文件删除后不可恢复。`,
+      `预计可释放 ${formatBytes(total)}。${ageText}\n${toRecycleBin ? "文件将移入回收站（可恢复）。" : "⚠️ 文件将被永久删除，不可恢复！"}`,
     );
     if (!ok) return;
     cleaning = true;
@@ -79,14 +102,18 @@ export function renderJunk(container: HTMLElement): void {
       label.textContent = `清理：${p.categoryName}（${p.done}/${p.total}）`;
     });
     try {
-      const reports = await cleanJunk(ids);
+      const reports = await cleanJunk(ids, { maxAgeDays: days, toRecycleBin });
       const freed = reports.reduce((a, r) => a + r.bytesFreed, 0);
       const items = reports.reduce((a, r) => a + r.itemsRemoved, 0);
       const errors = reports.reduce((a, r) => a + r.errors.length, 0);
-      label.textContent = `完成：清理 ${items} 项，释放 ${formatBytes(freed)}${errors ? `，${errors} 项失败` : ""}`;
-      toast(`清理完成，释放 ${formatBytes(freed)}`, errors > 0 ? "info" : "success");
+      const locked = reports.reduce((a, r) => a + r.locked, 0);
+      let msg = `完成：清理 ${items} 项，释放 ${formatBytes(freed)}`;
+      if (locked > 0) msg += `，${locked} 项被占用已跳过`;
+      if (errors > 0) msg += `，${errors} 项失败`;
+      label.textContent = msg;
+      toast(msg, errors > 0 ? "error" : locked > 0 ? "info" : "success", 5000);
       // 重新扫描以刷新大小
-      categories = await scanJunk();
+      categories = await scanJunk(days);
       renderList();
       progressWrap.hidden = true;
     } catch (e) {

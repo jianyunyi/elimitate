@@ -18,6 +18,10 @@ export interface CleanReport {
   categoryName: string;
   itemsRemoved: number;
   bytesFreed: number;
+  /** 因被占用而跳过的文件数 */
+  locked: number;
+  /** 被占用文件采样路径 */
+  lockedPaths: string[];
   errors: string[];
 }
 
@@ -56,6 +60,10 @@ export interface DeleteReport {
   deleted: number;
   failed: number;
   bytesFreed: number;
+  /** 因被占用而跳过的文件数 */
+  locked: number;
+  /** 被占用文件采样路径 */
+  lockedPaths: string[];
   errors: string[];
 }
 
@@ -82,4 +90,25 @@ export interface ProgressEvent {
   phase: "scan" | "clean";
   done: number;
   total: number;
+}
+
+// ---------- 大文件分析 ----------
+export interface LargeFileItem {
+  path: string;
+  sizeBytes: number;
+  /** 修改时间（Unix 毫秒，0 = 未知） */
+  modified: number;
+}
+
+export interface LargeFileReport {
+  drive: string;
+  scannedFiles: number;
+  elapsedMs: number;
+  cancelled: boolean;
+  items: LargeFileItem[];
+}
+
+export interface LargeProgressEvent {
+  scanned: number;
+  elapsedMs: number;
 }

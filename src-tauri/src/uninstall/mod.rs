@@ -53,6 +53,10 @@ pub struct DeleteReport {
     pub deleted: u64,
     pub failed: u64,
     pub bytes_freed: u64,
+    /// 因被占用而跳过的文件数
+    pub locked: u64,
+    /// 被占用文件采样路径（最多 20 条）
+    pub locked_paths: Vec<String>,
     pub errors: Vec<String>,
 }
 
