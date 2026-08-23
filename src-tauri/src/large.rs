@@ -13,6 +13,20 @@ use jwalk::WalkDir;
 use serde::Serialize;
 use tauri::{AppHandle, Emitter, State};
 
+use windows_sys::Win32::Storage::FileSystem::GetDriveTypeW;
+use windows_sys::Win32::System::WindowsProgramming::DRIVE_NO_ROOT_DIR;
+
+/// 规范化盘符输入："C:" / "c" / "C:\\" / " c " → "C"
+fn normalize_drive(input: &str) -> Option<String> {
+    let s = input.trim().trim_end_matches(['\\', '/', ':']);
+    let mut chars = s.chars();
+    let letter = chars.next()?;
+    if !letter.is_ascii_alphabetic() || chars.next().is_some() {
+        return None;
+    }
+    Some(letter.to_ascii_uppercase().to_string())
+}
+
 use crate::util;
 
 /// 扫描状态（跨命令共享，用于取消）
@@ -71,9 +85,14 @@ pub fn scan_large_files(
     state.cancel.store(false, Ordering::SeqCst);
     state.scanned.store(0, Ordering::SeqCst);
     let top_n = (top as usize).clamp(10, 500);
-    let root = format!("{drive}\\");
-    if !Path::new(&root).exists() {
-        return Err(format!("磁盘 {drive} 不存在"));
+    // 规范化盘符并校验（GetDriveTypeW 与磁盘枚举同一来源，避免路径语义差异误判）
+    let drive_letter =
+        normalize_drive(&drive).ok_or_else(|| format!("无效的磁盘盘符：{drive}"))?;
+    let root = format!("{drive_letter}:\\");
+    let drive_type = unsafe { GetDriveTypeW(crate::util::to_wide(&root).as_ptr()) };
+    // DRIVE_UNKNOWN = 0, DRIVE_NO_ROOT_DIR = 1
+    if drive_type == 0 || drive_type == DRIVE_NO_ROOT_DIR {
+        return Err(format!("磁盘 {drive_letter}: 不存在或不可访问"));
     }
     let started = Instant::now();
     let mut scanned = 0u64;

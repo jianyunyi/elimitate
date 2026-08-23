@@ -1,7 +1,7 @@
 {
   "name": "elimitate",
   "private": true,
-  "version": "0.2.2",
+  "version": "0.2.3",
   "type": "module",
   "description": "开源的 Windows 电脑清理与卸载残留清除工具",
   "packageManager": "pnpm@10.27.0",

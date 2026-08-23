@@ -26,7 +26,7 @@ app.innerHTML = `
       </nav>
       <div class="sidebar-foot">
         <span id="admin-badge" class="badge">…</span>
-        <span class="version muted">v0.2.2</span>
+        <span class="version muted">v0.2.3</span>
       </div>
     </aside>
     <main class="content" id="content"></main>

@@ -65,11 +65,19 @@ export function renderLargeFiles(container: HTMLElement): void {
   systemInfo()
     .then((info: SystemInfo) => {
       const sel = container.querySelector<HTMLSelectElement>("#lf-drive")!;
+      if (!info.drives || info.drives.length === 0) {
+        sel.innerHTML = `<option value="">未检测到磁盘</option>`;
+        return;
+      }
       sel.innerHTML = info.drives
         .map((d) => `<option value="${escapeHtml(d.letter.replace(":", ""))}">${escapeHtml(d.letter)}（可用 ${formatBytes(d.freeBytes)}）</option>`)
         .join("");
     })
-    .catch((e) => toast(`获取磁盘信息失败：${e}`, "error", 5000));
+    .catch((e) => {
+      const sel = container.querySelector<HTMLSelectElement>("#lf-drive")!;
+      sel.innerHTML = `<option value="">磁盘信息获取失败</option>`;
+      toast(`获取磁盘信息失败：${e}`, "error", 5000);
+    });
 
   container.querySelector("#lf-scan")!.addEventListener("click", () => startScan(container));
   container.querySelector("#lf-cancel")!.addEventListener("click", async () => {
@@ -100,6 +108,12 @@ function updateActions(container: HTMLElement): void {
 async function startScan(container: HTMLElement): Promise<void> {
   if (scanning) return;
   if (!isTauri()) return showBrowserHint();
+  // 未选择磁盘（下拉为空/加载失败）时直接提示，不再调用后端
+  const drive = container.querySelector<HTMLSelectElement>("#lf-drive")!.value;
+  if (!drive) {
+    toast("请先在磁盘列表中选择要扫描的磁盘", "error", 4000);
+    return;
+  }
   scanning = true;
   const scanBtn = container.querySelector<HTMLButtonElement>("#lf-scan")!;
   const cancelBtn = container.querySelector<HTMLButtonElement>("#lf-cancel")!;
@@ -118,7 +132,6 @@ async function startScan(container: HTMLElement): Promise<void> {
       label.textContent = `已扫描 ${p.scanned.toLocaleString()} 个文件，用时 ${(p.elapsedMs / 1000).toFixed(1)}s`;
     });
 
-    const drive = container.querySelector<HTMLSelectElement>("#lf-drive")!.value;
     const top = Number(container.querySelector<HTMLSelectElement>("#lf-top")!.value);
     const skipSystem = container.querySelector<HTMLInputElement>("#lf-skip-system")!.checked;
     const report = await scanLargeFiles(drive, top, skipSystem);
