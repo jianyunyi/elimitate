@@ -72,3 +72,12 @@ export function confirmDialog(message: string, detail = ""): Promise<boolean> {
     });
   });
 }
+
+/** 非 Tauri 环境（浏览器预览）时的操作提示 */
+export function showBrowserHint(): void {
+  toast(
+    "当前不在 Elimitate 桌面应用中运行（浏览器预览模式），清理功能不可用。请运行 `pnpm tauri dev` 或使用安装版 Elimitate。",
+    "error",
+    6000,
+  );
+}

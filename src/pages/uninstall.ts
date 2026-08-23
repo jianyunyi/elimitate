@@ -1,11 +1,12 @@
 import {
   deleteResidue,
+  isTauri,
   listInstalledApps,
   scanResidue,
   uninstallApp,
 } from "../api";
 import { formatBytes, escapeHtml } from "../format";
-import { confirmDialog, kindLabel, riskBadge, toast } from "../ui";
+import { confirmDialog, kindLabel, riskBadge, showBrowserHint, toast } from "../ui";
 import type { InstalledApp, ResidueItem } from "../types";
 
 let apps: InstalledApp[] = [];
@@ -38,6 +39,10 @@ export function renderUninstall(container: HTMLElement): void {
 }
 
 async function loadApps(container: HTMLElement): Promise<void> {
+  if (!isTauri()) {
+    container.querySelector("#app-list")!.innerHTML = `<div class="empty-tip">浏览器预览模式：请通过 Elimitate 桌面应用使用</div>`;
+    return;
+  }
   try {
     apps = await listInstalledApps();
     renderAppList("");
@@ -107,6 +112,7 @@ function renderDetail(key: string): void {
   `;
 
   detail.querySelector("#btn-uninstall")!.addEventListener("click", async () => {
+    if (!isTauri()) return showBrowserHint();
     const ok = await confirmDialog(
       `确认卸载「${app.name}」？`,
       "将启动官方卸载程序（UninstallString），卸载过程由软件自身完成。卸载完成后建议点击「扫描残留」清除遗留文件。",
@@ -124,7 +130,10 @@ function renderDetail(key: string): void {
     }
   });
 
-  detail.querySelector("#btn-scan-residue")!.addEventListener("click", () => scanResidueFor(app));
+  detail.querySelector("#btn-scan-residue")!.addEventListener("click", () => {
+    if (!isTauri()) return showBrowserHint();
+    scanResidueFor(app);
+  });
 }
 
 async function scanResidueFor(app: InstalledApp): Promise<void> {
@@ -211,6 +220,7 @@ function renderResidue(name: string, totalSize: number): void {
     area.querySelectorAll<HTMLInputElement>(".residue-check").forEach((cb) => (cb.checked = !cb.dataset.high));
   });
   area.querySelector("#btn-res-delete")!.addEventListener("click", async () => {
+    if (!isTauri()) return showBrowserHint();
     const checkedPaths = Array.from(area.querySelectorAll<HTMLInputElement>(".residue-check:checked")).map(
       (cb) => cb.dataset.path!,
     );

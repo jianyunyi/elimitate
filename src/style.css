@@ -699,6 +699,28 @@ body {
   gap: 10px;
 }
 
+/* ---------- 浏览器预览模式横幅 ---------- */
+.browser-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 2000;
+  background: rgba(185, 28, 28, 0.92);
+  color: #fff;
+  text-align: center;
+  padding: 8px 16px;
+  font-size: 13px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+}
+
+.browser-banner code {
+  background: rgba(255, 255, 255, 0.18);
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
 /* ---------- 行内选项 / 开关 ---------- */
 .inline-opt {
   display: inline-flex;

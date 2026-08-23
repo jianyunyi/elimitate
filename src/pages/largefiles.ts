@@ -1,6 +1,7 @@
 import {
   cancelLargeScan,
   deletePaths,
+  isTauri,
   onLargeProgress,
   openInExplorer,
   precheckLocked,
@@ -8,7 +9,7 @@ import {
   systemInfo,
 } from "../api";
 import { formatBytes, escapeHtml } from "../format";
-import { confirmDialog, toast } from "../ui";
+import { confirmDialog, showBrowserHint, toast } from "../ui";
 import type { LargeFileItem, SystemInfo } from "../types";
 
 let containerEl: HTMLElement | null = null;
@@ -97,6 +98,7 @@ function updateActions(container: HTMLElement): void {
 
 async function startScan(container: HTMLElement): Promise<void> {
   if (scanning) return;
+  if (!isTauri()) return showBrowserHint();
   scanning = true;
   const scanBtn = container.querySelector<HTMLButtonElement>("#lf-scan")!;
   const cancelBtn = container.querySelector<HTMLButtonElement>("#lf-cancel")!;
@@ -108,13 +110,13 @@ async function startScan(container: HTMLElement): Promise<void> {
   cancelBtn.disabled = false;
   wrap.innerHTML = `<div class="empty-tip">正在扫描…（可随时停止，停止后显示已发现的结果）</div>`;
 
-  unlisten?.();
-  unlisten = await onLargeProgress((p) => {
-    progressWrap.hidden = false;
-    label.textContent = `已扫描 ${p.scanned.toLocaleString()} 个文件，用时 ${(p.elapsedMs / 1000).toFixed(1)}s`;
-  });
-
   try {
+    unlisten?.();
+    unlisten = await onLargeProgress((p) => {
+      progressWrap.hidden = false;
+      label.textContent = `已扫描 ${p.scanned.toLocaleString()} 个文件，用时 ${(p.elapsedMs / 1000).toFixed(1)}s`;
+    });
+
     const drive = container.querySelector<HTMLSelectElement>("#lf-drive")!.value;
     const top = Number(container.querySelector<HTMLSelectElement>("#lf-top")!.value);
     const skipSystem = container.querySelector<HTMLInputElement>("#lf-skip-system")!.checked;
@@ -168,6 +170,7 @@ function renderResults(container: HTMLElement, items: LargeFileItem[]): void {
 }
 
 async function deleteSelected(container: HTMLElement): Promise<void> {
+  if (!isTauri()) return showBrowserHint();
   const paths = selectedPaths(container);
   if (paths.length === 0) return;
   const toRecycleBin = container.querySelector<HTMLInputElement>("#lf-recycle")!.checked;

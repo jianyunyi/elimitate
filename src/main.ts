@@ -1,4 +1,4 @@
-import { systemInfo } from "./api";
+import { isTauri, systemInfo } from "./api";
 import { renderDashboard } from "./pages/dashboard";
 import { renderJunk } from "./pages/junk";
 import { renderLargeFiles } from "./pages/largefiles";
@@ -60,5 +60,15 @@ systemInfo()
     badge.classList.add(info.isAdmin ? "badge-admin" : "badge-warn");
   })
   .catch(() => {});
+
+// 浏览器预览模式提示（非 Tauri 环境）
+if (!isTauri()) {
+  const banner = document.createElement("div");
+  banner.className = "browser-banner";
+  banner.innerHTML =
+    `⚠️ 当前以「浏览器预览」模式运行，清理/卸载功能不可用。` +
+    `请运行 <code>pnpm tauri dev</code> 或下载安装版 Elimitate（GitHub Releases）。`;
+  document.body.prepend(banner);
+}
 
 navigate("dashboard");

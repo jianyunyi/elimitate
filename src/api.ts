@@ -14,6 +14,10 @@ import type {
   UninstallResult,
 } from "./types";
 
+/** 是否运行在 Tauri 桌面环境中（浏览器预览时为 false） */
+export const isTauri = (): boolean =>
+  typeof window !== "undefined" && !!(window as unknown as { __TAURI_INTERNALS__?: unknown }).__TAURI_INTERNALS__;
+
 // ---------- 系统 ----------
 export const systemInfo = () => invoke<SystemInfo>("system_info");
 

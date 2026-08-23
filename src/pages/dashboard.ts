@@ -1,6 +1,6 @@
-import { cleanAll, onProgress, relaunchAsAdmin, systemInfo } from "../api";
+import { cleanAll, isTauri, onProgress, relaunchAsAdmin, systemInfo } from "../api";
 import { formatBytes, escapeHtml } from "../format";
-import { toast } from "../ui";
+import { showBrowserHint, toast } from "../ui";
 import type { SystemInfo } from "../types";
 
 let info: SystemInfo | null = null;
@@ -95,18 +95,26 @@ async function loadSystemInfo(container: HTMLElement): Promise<void> {
 }
 
 async function runCleanAll(container: HTMLElement): Promise<void> {
+  if (!isTauri()) return showBrowserHint();
   const btn = container.querySelector<HTMLButtonElement>("#btn-clean-all")!;
   const progressWrap = container.querySelector<HTMLElement>("#clean-progress")!;
   const fill = container.querySelector<HTMLElement>("#clean-progress-fill")!;
   const label = container.querySelector<HTMLElement>("#clean-progress-label")!;
   btn.disabled = true;
 
-  const un = await onProgress((p) => {
-    progressWrap.hidden = false;
-    const pct = p.total > 0 ? Math.round((p.done / p.total) * 100) : 0;
-    fill.style.width = `${pct}%`;
-    label.textContent = `${p.phase === "scan" ? "扫描" : "清理"}：${p.categoryName}（${p.done}/${p.total}）`;
-  });
+  let un: (() => void) | null = null;
+  try {
+    un = await onProgress((p) => {
+      progressWrap.hidden = false;
+      const pct = p.total > 0 ? Math.round((p.done / p.total) * 100) : 0;
+      fill.style.width = `${pct}%`;
+      label.textContent = `${p.phase === "scan" ? "扫描" : "清理"}：${p.categoryName}（${p.done}/${p.total}）`;
+    });
+  } catch (e) {
+    btn.disabled = false;
+    toast(`初始化失败：${e}`, "error", 5000);
+    return;
+  }
 
   try {
     const toRecycleBin = container.querySelector<HTMLInputElement>("#clean-all-recycle")!.checked;
@@ -125,7 +133,7 @@ async function runCleanAll(container: HTMLElement): Promise<void> {
     toast(`一键清理失败：${e}`, "error", 5000);
     label.textContent = "一键清理失败";
   } finally {
-    un();
+    un?.();
     btn.disabled = false;
   }
 }

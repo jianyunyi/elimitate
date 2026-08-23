@@ -1,6 +1,6 @@
-import { cleanJunk, onProgress, scanJunk } from "../api";
+import { cleanJunk, isTauri, onProgress, scanJunk } from "../api";
 import { formatBytes, escapeHtml } from "../format";
-import { confirmDialog, riskBadge, toast } from "../ui";
+import { confirmDialog, riskBadge, showBrowserHint, toast } from "../ui";
 import type { JunkCategory } from "../types";
 
 let categories: JunkCategory[] = [];
@@ -57,15 +57,17 @@ export function renderJunk(container: HTMLElement): void {
 
   container.querySelector("#btn-scan")!.addEventListener("click", async () => {
     if (scanning) return;
+    if (!isTauri()) return showBrowserHint();
     scanning = true;
     list.innerHTML = `<div class="empty-tip">正在扫描…</div>`;
-    const un = await onProgress((p) => {
-      progressWrap.hidden = false;
-      const pct = p.total > 0 ? Math.round((p.done / p.total) * 100) : 0;
-      fill.style.width = `${pct}%`;
-      label.textContent = `扫描：${p.categoryName}（${p.done}/${p.total}）`;
-    });
+    let un: (() => void) | null = null;
     try {
+      un = await onProgress((p) => {
+        progressWrap.hidden = false;
+        const pct = p.total > 0 ? Math.round((p.done / p.total) * 100) : 0;
+        fill.style.width = `${pct}%`;
+        label.textContent = `扫描：${p.categoryName}（${p.done}/${p.total}）`;
+      });
       categories = await scanJunk(ageFilter());
       renderList();
       progressWrap.hidden = true;
@@ -75,13 +77,14 @@ export function renderJunk(container: HTMLElement): void {
       list.innerHTML = `<div class="empty-tip">扫描失败：${escapeHtml(String(e))}</div>`;
       toast(`扫描失败：${e}`, "error", 5000);
     } finally {
-      un();
+      un?.();
       scanning = false;
     }
   });
 
   container.querySelector("#btn-clean")!.addEventListener("click", async () => {
     if (cleaning) return;
+    if (!isTauri()) return showBrowserHint();
     const ids = selectedIds();
     if (ids.length === 0) return;
     const total = categories.filter((c) => ids.includes(c.id)).reduce((a, c) => a + c.sizeBytes, 0);
@@ -95,13 +98,14 @@ export function renderJunk(container: HTMLElement): void {
     if (!ok) return;
     cleaning = true;
     setCleanBtn(true);
-    const un = await onProgress((p) => {
-      progressWrap.hidden = false;
-      const pct = p.total > 0 ? Math.round((p.done / p.total) * 100) : 0;
-      fill.style.width = `${pct}%`;
-      label.textContent = `清理：${p.categoryName}（${p.done}/${p.total}）`;
-    });
+    let un: (() => void) | null = null;
     try {
+      un = await onProgress((p) => {
+        progressWrap.hidden = false;
+        const pct = p.total > 0 ? Math.round((p.done / p.total) * 100) : 0;
+        fill.style.width = `${pct}%`;
+        label.textContent = `清理：${p.categoryName}（${p.done}/${p.total}）`;
+      });
       const reports = await cleanJunk(ids, { maxAgeDays: days, toRecycleBin });
       const freed = reports.reduce((a, r) => a + r.bytesFreed, 0);
       const items = reports.reduce((a, r) => a + r.itemsRemoved, 0);
@@ -119,7 +123,7 @@ export function renderJunk(container: HTMLElement): void {
     } catch (e) {
       toast(`清理失败：${e}`, "error", 5000);
     } finally {
-      un();
+      un?.();
       cleaning = false;
       setCleanBtn(false);
     }
