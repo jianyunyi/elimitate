@@ -1,9 +1,8 @@
 import { cleanAll, isTauri, onProgress, relaunchAsAdmin, systemInfo } from "../api";
 import { formatBytes, escapeHtml } from "../format";
+import { icon } from "../icons";
 import { showBrowserHint, toast } from "../ui";
 import type { SystemInfo } from "../types";
-
-let info: SystemInfo | null = null;
 
 export function renderDashboard(container: HTMLElement): void {
   container.innerHTML = `
@@ -12,11 +11,12 @@ export function renderDashboard(container: HTMLElement): void {
       <p>扫描并清理常见垃圾文件，释放磁盘空间，提升系统性能。</p>
     </div>
     <div class="dashboard">
-      <div class="stat-grid" id="stat-grid"></div>
       <div class="card">
-        <div class="card-head">
-          <h3>磁盘空间</h3>
+        <div class="overview-head">
+          <div class="overview-title">${icon("drive", 16)}磁盘空间</div>
+          <div class="overview-summary" id="ov-summary"></div>
         </div>
+        <div class="overview-facts" id="ov-facts"></div>
         <div id="drive-list"><div class="muted">加载中…</div></div>
       </div>
       <div class="card">
@@ -28,14 +28,14 @@ export function renderDashboard(container: HTMLElement): void {
           缩略图缓存、系统日志、错误报告、预读取与传递优化缓存等全部类别。
         </p>
         <div id="clean-progress" class="progress-wrap" hidden>
-          <div class="progress-track"><div class="progress-fill" id="clean-progress-fill" style="width:0%"></div></div>
+          <div class="progress-track"><div class="progress-fill" id="clean-progress-fill"></div></div>
           <div class="progress-label" id="clean-progress-label"></div>
         </div>
         <div class="clean-cta">
-          <button id="btn-clean-all" class="btn btn-primary btn-lg">🧹 一键清理</button>
+          <button id="btn-clean-all" class="btn btn-primary btn-lg">${icon("sparkle", 18)}一键清理</button>
           <label class="inline-opt toggle-opt">
             <input type="checkbox" id="clean-all-recycle" checked />
-            🗑️ 删除到回收站（可恢复）
+            ${icon("trash", 14)}删除到回收站（可恢复）
           </label>
         </div>
       </div>
@@ -47,6 +47,7 @@ export function renderDashboard(container: HTMLElement): void {
 }
 
 async function loadSystemInfo(container: HTMLElement): Promise<void> {
+  let info: SystemInfo;
   try {
     info = await systemInfo();
   } catch (e) {
@@ -59,11 +60,11 @@ async function loadSystemInfo(container: HTMLElement): Promise<void> {
   const totalSize = drives.reduce((a, d) => a + d.totalBytes, 0);
   const freePct = totalSize > 0 ? Math.round((totalFree / totalSize) * 100) : 0;
 
-  container.querySelector("#stat-grid")!.innerHTML = `
-    <div class="stat-card"><div class="stat-value">${escapeHtml(osVersion)}</div><div class="stat-label">系统</div></div>
-    <div class="stat-card"><div class="stat-value">${formatBytes(totalFree)}</div><div class="stat-label">可用空间</div></div>
-    <div class="stat-card"><div class="stat-value">${freePct}%</div><div class="stat-label">剩余比例</div></div>
-    <div class="stat-card"><div class="stat-value">${isAdmin ? "✅ 管理员" : "⚠️ 普通权限"}</div><div class="stat-label">运行权限</div></div>
+  container.querySelector("#ov-summary")!.textContent = `可用 ${formatBytes(totalFree)} / ${formatBytes(totalSize)}（${freePct}%）`;
+  container.querySelector("#ov-facts")!.innerHTML = `
+    <span>系统 <b>${escapeHtml(osVersion)}</b></span>
+    <span>磁盘 <b>${drives.length}</b> 个</span>
+    <span>权限 ${isAdmin ? '<b class="badge badge-admin">管理员</b>' : '<b class="badge badge-warn">普通权限</b>'}</span>
   `;
 
   container.querySelector("#drive-list")!.innerHTML = drives
@@ -107,7 +108,7 @@ async function runCleanAll(container: HTMLElement): Promise<void> {
     un = await onProgress((p) => {
       progressWrap.hidden = false;
       const pct = p.total > 0 ? Math.round((p.done / p.total) * 100) : 0;
-      fill.style.width = `${pct}%`;
+      fill.style.transform = `scaleX(${pct / 100})`;
       label.textContent = `${p.phase === "scan" ? "扫描" : "清理"}：${p.categoryName}（${p.done}/${p.total}）`;
     });
   } catch (e) {

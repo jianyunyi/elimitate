@@ -1,6 +1,6 @@
 [package]
 name = "elimitate"
-version = "0.2.1"
+version = "0.2.2"
 description = "开源的 Windows 电脑清理与卸载残留清除工具"
 authors = ["Elimitate Contributors"]
 edition = "2021"

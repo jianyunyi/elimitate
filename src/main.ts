@@ -1,4 +1,5 @@
 import { isTauri, systemInfo } from "./api";
+import { icon } from "./icons";
 import { renderDashboard } from "./pages/dashboard";
 import { renderJunk } from "./pages/junk";
 import { renderLargeFiles } from "./pages/largefiles";
@@ -11,21 +12,21 @@ app.innerHTML = `
   <div class="app-shell">
     <aside class="sidebar">
       <div class="logo">
-        <span class="logo-icon">🧹</span>
+        <span class="logo-icon">${icon("sparkle", 20)}</span>
         <div class="logo-text">
           <b>Elimitate</b>
           <span class="muted">清理助手</span>
         </div>
       </div>
       <nav class="nav">
-        <button class="nav-item active" data-page="dashboard">⚡ 一键清理</button>
-        <button class="nav-item" data-page="junk">🗑️ 垃圾清理</button>
-        <button class="nav-item" data-page="largefiles">📁 大文件分析</button>
-        <button class="nav-item" data-page="uninstall">📦 软件卸载</button>
+        <button class="nav-item active" data-page="dashboard">${icon("sparkle", 16)}<span>一键清理</span></button>
+        <button class="nav-item" data-page="junk">${icon("trash", 16)}<span>垃圾清理</span></button>
+        <button class="nav-item" data-page="largefiles">${icon("folder", 16)}<span>大文件分析</span></button>
+        <button class="nav-item" data-page="uninstall">${icon("package", 16)}<span>软件卸载</span></button>
       </nav>
       <div class="sidebar-foot">
         <span id="admin-badge" class="badge">…</span>
-        <span class="version muted">v0.2.0</span>
+        <span class="version muted">v0.2.2</span>
       </div>
     </aside>
     <main class="content" id="content"></main>

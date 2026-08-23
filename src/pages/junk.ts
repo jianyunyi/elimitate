@@ -1,5 +1,6 @@
 import { cleanJunk, isTauri, onProgress, scanJunk } from "../api";
 import { formatBytes, escapeHtml } from "../format";
+import { icon, skeletonRows } from "../icons";
 import { confirmDialog, riskBadge, showBrowserHint, toast } from "../ui";
 import type { JunkCategory } from "../types";
 
@@ -16,8 +17,8 @@ export function renderJunk(container: HTMLElement): void {
       <p>扫描常见垃圾文件，按类别查看大小后选择性清理。</p>
     </div>
     <div class="toolbar">
-      <button id="btn-scan" class="btn btn-primary">🔍 开始扫描</button>
-      <button id="btn-clean" class="btn btn-danger" disabled>🗑️ 清理选中</button>
+      <button id="btn-scan" class="btn btn-primary">${icon("search", 15)}开始扫描</button>
+      <button id="btn-clean" class="btn btn-danger" disabled>${icon("trash", 15)}清理选中</button>
       <button id="btn-select-all" class="btn btn-ghost">全选</button>
       <button id="btn-select-none" class="btn btn-ghost">清空</button>
       <label class="inline-opt">
@@ -33,11 +34,11 @@ export function renderJunk(container: HTMLElement): void {
       </label>
       <label class="inline-opt toggle-opt">
         <input type="checkbox" id="recycle-toggle" checked />
-        🗑️ 删除到回收站（可恢复）
+        ${icon("trash", 14)}删除到回收站（可恢复）
       </label>
     </div>
     <div class="progress-wrap" id="junk-progress" hidden>
-      <div class="progress-track"><div class="progress-fill" id="junk-progress-fill" style="width:0%"></div></div>
+      <div class="progress-track"><div class="progress-fill" id="junk-progress-fill"></div></div>
       <div class="progress-label" id="junk-progress-label"></div>
     </div>
     <div class="junk-list" id="junk-list">
@@ -59,13 +60,13 @@ export function renderJunk(container: HTMLElement): void {
     if (scanning) return;
     if (!isTauri()) return showBrowserHint();
     scanning = true;
-    list.innerHTML = `<div class="empty-tip">正在扫描…</div>`;
+    list.innerHTML = skeletonRows(4);
     let un: (() => void) | null = null;
     try {
       un = await onProgress((p) => {
         progressWrap.hidden = false;
         const pct = p.total > 0 ? Math.round((p.done / p.total) * 100) : 0;
-        fill.style.width = `${pct}%`;
+        fill.style.transform = `scaleX(${pct / 100})`;
         label.textContent = `扫描：${p.categoryName}（${p.done}/${p.total}）`;
       });
       categories = await scanJunk(ageFilter());
@@ -103,7 +104,7 @@ export function renderJunk(container: HTMLElement): void {
       un = await onProgress((p) => {
         progressWrap.hidden = false;
         const pct = p.total > 0 ? Math.round((p.done / p.total) * 100) : 0;
-        fill.style.width = `${pct}%`;
+        fill.style.transform = `scaleX(${pct / 100})`;
         label.textContent = `清理：${p.categoryName}（${p.done}/${p.total}）`;
       });
       const reports = await cleanJunk(ids, { maxAgeDays: days, toRecycleBin });
@@ -151,14 +152,15 @@ function setCleanBtn(disabled: boolean): void {
   const btn = containerEl.querySelector<HTMLButtonElement>("#btn-clean")!;
   btn.disabled = disabled || selectedIds().length === 0;
   const ids = selectedIds();
-  btn.textContent = ids.length > 0 ? `🗑️ 清理选中（${ids.length} 类）` : "🗑️ 清理选中";
+  const label = ids.length > 0 ? `清理选中（${ids.length} 类）` : "清理选中";
+  btn.innerHTML = `${icon("trash", 15)}${label}`;
 }
 
 function renderList(): void {
   const list = containerEl?.querySelector<HTMLElement>("#junk-list");
   if (!list) return;
   if (categories.length === 0) {
-    list.innerHTML = `<div class="empty-tip">未发现可清理的垃圾，系统很干净 🎉</div>`;
+    list.innerHTML = `<div class="empty-tip"><span class="empty-icon success">${icon("check", 20)}</span>未发现可清理的垃圾，系统很干净</div>`;
     return;
   }
   list.innerHTML = categories
@@ -177,7 +179,7 @@ function renderList(): void {
           </div>
           <div class="junk-desc">${escapeHtml(c.description)}</div>
           <details class="junk-paths">
-            <summary>查看路径（${c.paths.length} 个位置）</summary>
+            <summary>${icon("chevron", 12)}查看路径（${c.paths.length} 个位置）</summary>
             <ul>${paths}</ul>
           </details>
         </div>

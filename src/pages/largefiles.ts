@@ -9,6 +9,7 @@ import {
   systemInfo,
 } from "../api";
 import { formatBytes, escapeHtml } from "../format";
+import { icon } from "../icons";
 import { confirmDialog, showBrowserHint, toast } from "../ui";
 import type { LargeFileItem, SystemInfo } from "../types";
 
@@ -40,14 +41,14 @@ export function renderLargeFiles(container: HTMLElement): void {
         <input type="checkbox" id="lf-skip-system" checked />
         跳过系统目录（Windows / Program Files 等）
       </label>
-      <button id="lf-scan" class="btn btn-primary">🔍 开始扫描</button>
-      <button id="lf-cancel" class="btn btn-ghost" disabled>⏹ 停止</button>
+      <button id="lf-scan" class="btn btn-primary">${icon("search", 15)}开始扫描</button>
+      <button id="lf-cancel" class="btn btn-ghost" disabled>${icon("stop", 15)}停止</button>
       <label class="inline-opt toggle-opt">
         <input type="checkbox" id="lf-recycle" checked />
-        🗑️ 删除到回收站（可恢复）
+        ${icon("trash", 14)}删除到回收站（可恢复）
       </label>
-      <button id="lf-open" class="btn btn-ghost" disabled>📂 打开所在文件夹</button>
-      <button id="lf-delete" class="btn btn-danger" disabled>🗑️ 删除选中</button>
+      <button id="lf-open" class="btn btn-ghost" disabled>${icon("folder", 15)}打开所在文件夹</button>
+      <button id="lf-delete" class="btn btn-danger" disabled>${icon("trash", 15)}删除选中</button>
     </div>
     <div class="progress-wrap" id="lf-progress" hidden>
       <div class="progress-track"><div class="progress-fill" id="lf-progress-fill" style="width:30%"></div></div>
@@ -93,7 +94,7 @@ function updateActions(container: HTMLElement): void {
   const del = container.querySelector<HTMLButtonElement>("#lf-delete")!;
   open.disabled = n !== 1;
   del.disabled = n === 0;
-  del.textContent = n > 0 ? `🗑️ 删除选中（${n}）` : "🗑️ 删除选中";
+  del.innerHTML = `${icon("trash", 15)}${n > 0 ? `删除选中（${n}）` : "删除选中"}`;
 }
 
 async function startScan(container: HTMLElement): Promise<void> {

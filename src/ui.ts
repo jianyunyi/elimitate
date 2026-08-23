@@ -46,13 +46,13 @@ export function riskClass(risk: "low" | "medium" | "high"): string {
   return `badge-${risk}`;
 }
 
-// 简单确认对话框
+// 简单确认对话框（Esc 关闭 / 默认焦点在取消键 / 焦点圈定在弹窗内）
 export function confirmDialog(message: string, detail = ""): Promise<boolean> {
   return new Promise((resolve) => {
     const overlay = document.createElement("div");
     overlay.className = "modal-overlay";
     overlay.innerHTML = `
-      <div class="modal">
+      <div class="modal" role="alertdialog" aria-modal="true" aria-label="${escapeHtml(message)}">
         <h3>${escapeHtml(message)}</h3>
         ${detail ? `<p class="modal-detail">${escapeHtml(detail)}</p>` : ""}
         <div class="modal-actions">
@@ -63,13 +63,24 @@ export function confirmDialog(message: string, detail = ""): Promise<boolean> {
     document.body.appendChild(overlay);
     const close = (v: boolean) => {
       overlay.remove();
+      document.removeEventListener("keydown", onKey, true);
       resolve(v);
     };
-    overlay.querySelector("[data-act=cancel]")!.addEventListener("click", () => close(false));
-    overlay.querySelector("[data-act=ok]")!.addEventListener("click", () => close(true));
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.stopPropagation();
+        close(false);
+      }
+    };
+    document.addEventListener("keydown", onKey, true);
+    const cancelBtn = overlay.querySelector<HTMLButtonElement>("[data-act=cancel]")!;
+    const okBtn = overlay.querySelector<HTMLButtonElement>("[data-act=ok]")!;
+    cancelBtn.addEventListener("click", () => close(false));
+    okBtn.addEventListener("click", () => close(true));
     overlay.addEventListener("click", (e) => {
       if (e.target === overlay) close(false);
     });
+    cancelBtn.focus();
   });
 }
 
