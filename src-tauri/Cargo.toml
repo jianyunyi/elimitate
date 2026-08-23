@@ -1,0 +1,39 @@
+[package]
+name = "elimitate"
+version = "0.1.0"
+description = "开源的 Windows 电脑清理与卸载残留清除工具"
+authors = ["Elimitate Contributors"]
+edition = "2021"
+rust-version = "1.77.2"
+license = "MIT"
+
+[lib]
+name = "elimitate_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+winreg = "0.56"
+windows-sys = { version = "0.61", features = [
+  "Win32_Foundation",
+  "Win32_UI_Shell",
+  "Win32_UI_WindowsAndMessaging",
+  "Win32_Storage_FileSystem",
+  "Win32_System_SystemInformation",
+  "Win32_System_WindowsProgramming",
+  "Win32_System_Threading",
+  "Win32_System_Memory",
+  "Win32_System_Registry",
+  "Wdk_System_SystemServices",
+] }
+walkdir = "2.5"
+dirs = "6"
+
+[profile.release]
+opt-level = 2
+strip = true

@@ -1,0 +1,24 @@
+# Rust / Cargo 工具链（本地构建环境，可整个删除后重新安装）
+.rustup/
+.cargo/
+src-tauri/target/
+
+# Node
+node_modules/
+.pnpm-store/
+dist/
+
+# 临时构建辅助文件
+*.crate
+rustup-init.exe
+
+# 系统 / 编辑器
+.DS_Store
+Thumbs.db
+*.log
+.idea/
+.vscode/
+*.code-workspace
+
+# Tauri 生成的 schema
+src-tauri/gen/schemas/
