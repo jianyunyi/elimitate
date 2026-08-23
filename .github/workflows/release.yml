@@ -49,3 +49,10 @@ jobs:
             详细说明见 [README](https://github.com/jianyunyi/elimitate#readme)。
           releaseDraft: false
           prerelease: false
+
+      # 额外上传免安装绿色版（tauri-action 默认只传 bundle 目录）
+      - name: Upload portable binary
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload ${{ github.ref_name }} src-tauri/target/release/elimitate.exe --clobber
