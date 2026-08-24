@@ -19,7 +19,10 @@ export function renderUninstall(container: HTMLElement): void {
   containerEl = container;
   container.innerHTML = `
     <div class="page-head">
-      <h2>软件卸载</h2>
+      <div class="page-title-row">
+        <span class="page-icon">${icon("package", 18)}</span>
+        <h2>软件卸载</h2>
+      </div>
       <p>运行官方卸载程序，再扫描删除卸载后残留的文件与注册表项，实现彻底卸载。</p>
     </div>
     <div class="uninstall-layout">
@@ -31,7 +34,7 @@ export function renderUninstall(container: HTMLElement): void {
         <div class="app-list" id="app-list">${skeletonRows(6)}</div>
       </div>
       <div class="card app-detail" id="app-detail">
-        <div class="empty-tip">从左侧选择一个软件</div>
+        <div class="empty-tip"><span class="empty-icon">${icon("package", 20)}</span>从左侧选择一个软件</div>
       </div>
     </div>
   `;

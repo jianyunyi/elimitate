@@ -13,7 +13,10 @@ export function renderJunk(container: HTMLElement): void {
   containerEl = container;
   container.innerHTML = `
     <div class="page-head">
-      <h2>垃圾清理</h2>
+      <div class="page-title-row">
+        <span class="page-icon">${icon("trash", 18)}</span>
+        <h2>垃圾清理</h2>
+      </div>
       <p>扫描常见垃圾文件，按类别查看大小后选择性清理。</p>
     </div>
     <div class="toolbar">
@@ -164,10 +167,10 @@ function renderList(): void {
     return;
   }
   list.innerHTML = categories
-    .map((c) => {
+    .map((c, i) => {
       const paths = c.paths.map((p) => `<li title="${escapeHtml(p)}">${escapeHtml(p)}</li>`).join("");
       return `
-      <div class="junk-item">
+      <div class="junk-item" style="--i:${Math.min(i, 8)}">
         <label class="junk-check">
           <input type="checkbox" data-id="${escapeHtml(c.id)}" />
         </label>

@@ -26,7 +26,7 @@ app.innerHTML = `
       </nav>
       <div class="sidebar-foot">
         <span id="admin-badge" class="badge">…</span>
-        <span class="version muted">v0.2.3</span>
+        <span class="version muted">v0.3.0</span>
       </div>
     </aside>
     <main class="content" id="content"></main>
@@ -47,6 +47,10 @@ function navigate(page: string): void {
   const content = document.getElementById("content")!;
   content.innerHTML = "";
   pages[page]?.(content);
+  // 页面切换的快速淡入（重启动画）
+  content.style.animation = "none";
+  void content.offsetWidth;
+  content.style.animation = "page-in 0.18s ease";
 }
 
 document.querySelectorAll(".nav-item").forEach((btn) => {

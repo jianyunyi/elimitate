@@ -7,7 +7,10 @@ import type { SystemInfo } from "../types";
 export function renderDashboard(container: HTMLElement): void {
   container.innerHTML = `
     <div class="page-head">
-      <h2>一键清理</h2>
+      <div class="page-title-row">
+        <span class="page-icon">${icon("sparkle", 18)}</span>
+        <h2>一键清理</h2>
+      </div>
       <p>扫描并清理常见垃圾文件，释放磁盘空间，提升系统性能。</p>
     </div>
     <div class="dashboard">
@@ -68,14 +71,16 @@ async function loadSystemInfo(container: HTMLElement): Promise<void> {
   `;
 
   container.querySelector("#drive-list")!.innerHTML = drives
-    .map(
-      (d) => `
+    .map((d) => {
+      const usedPct = d.totalBytes > 0 ? Math.round((1 - d.freeBytes / d.totalBytes) * 100) : 0;
+      const cls = usedPct >= 92 ? "danger" : usedPct >= 80 ? "warn" : "";
+      return `
       <div class="drive-row">
         <div class="drive-label"><span class="drive-letter">${escapeHtml(d.letter)}</span>
-          <span class="muted">${formatBytes(d.freeBytes)} / ${formatBytes(d.totalBytes)}</span></div>
-        <div class="progress-track"><div class="progress-fill drive-fill" style="width:${d.totalBytes > 0 ? Math.round((d.freeBytes / d.totalBytes) * 100) : 0}%"></div></div>
-      </div>`,
-    )
+          <span class="muted">${formatBytes(d.freeBytes)} / ${formatBytes(d.totalBytes)}（已用 ${usedPct}%）</span></div>
+        <div class="progress-track"><div class="progress-fill drive-fill ${cls}" style="width:${100 - usedPct}%"></div></div>
+      </div>`;
+    })
     .join("");
 
   if (!isAdmin) {
@@ -129,6 +134,9 @@ async function runCleanAll(container: HTMLElement): Promise<void> {
     if (errors > 0) msg += `，${errors} 项失败（可能需要更高权限）`;
     label.textContent = msg;
     toast(msg, errors > 0 ? "error" : locked > 0 ? "info" : "success", 5000);
+    // 清扫完成的愉悦时刻：按钮一次轻快脉冲
+    btn.classList.add("btn-pulse");
+    setTimeout(() => btn.classList.remove("btn-pulse"), 600);
     loadSystemInfo(container);
   } catch (e) {
     toast(`一键清理失败：${e}`, "error", 5000);

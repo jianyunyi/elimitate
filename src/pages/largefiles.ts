@@ -9,7 +9,7 @@ import {
   systemInfo,
 } from "../api";
 import { formatBytes, escapeHtml } from "../format";
-import { icon } from "../icons";
+import { icon, skeletonRows } from "../icons";
 import { confirmDialog, showBrowserHint, toast } from "../ui";
 import type { LargeFileItem, SystemInfo } from "../types";
 
@@ -21,7 +21,10 @@ export function renderLargeFiles(container: HTMLElement): void {
   containerEl = container;
   container.innerHTML = `
     <div class="page-head">
-      <h2>大文件分析</h2>
+      <div class="page-title-row">
+        <span class="page-icon">${icon("folder", 18)}</span>
+        <h2>大文件分析</h2>
+      </div>
       <p>扫描磁盘中占用空间最大的文件，由你亲自判断是否删除。</p>
     </div>
     <div class="toolbar">
@@ -51,7 +54,7 @@ export function renderLargeFiles(container: HTMLElement): void {
       <button id="lf-delete" class="btn btn-danger" disabled>${icon("trash", 15)}删除选中</button>
     </div>
     <div class="progress-wrap" id="lf-progress" hidden>
-      <div class="progress-track"><div class="progress-fill" id="lf-progress-fill" style="width:30%"></div></div>
+      <div class="progress-track"><div class="progress-fill static" id="lf-progress-fill" style="width:30%"></div></div>
       <div class="progress-label" id="lf-progress-label"></div>
     </div>
     <div class="card lf-card">
@@ -123,7 +126,7 @@ async function startScan(container: HTMLElement): Promise<void> {
   const wrap = container.querySelector<HTMLElement>("#lf-table-wrap")!;
   scanBtn.disabled = true;
   cancelBtn.disabled = false;
-  wrap.innerHTML = `<div class="empty-tip">正在扫描…（可随时停止，停止后显示已发现的结果）</div>`;
+  wrap.innerHTML = skeletonRows(4);
 
   try {
     unlisten?.();
@@ -155,17 +158,19 @@ async function startScan(container: HTMLElement): Promise<void> {
 function renderResults(container: HTMLElement, items: LargeFileItem[]): void {
   const wrap = container.querySelector<HTMLElement>("#lf-table-wrap")!;
   if (items.length === 0) {
-    wrap.innerHTML = `<div class="empty-tip">未发现大文件</div>`;
+    wrap.innerHTML = `<div class="empty-tip"><span class="empty-icon success">${icon("check", 20)}</span>未发现大文件</div>`;
     return;
   }
   const rows = items
     .map((f, idx) => {
       const mod = f.modified > 0 ? new Date(f.modified).toLocaleDateString() : "未知";
+      // 大小分档（数字始终可见，颜色为辅助编码）
+      const tier = f.sizeBytes >= 1073741824 ? "huge" : f.sizeBytes >= 209715200 ? "big" : "";
       return `
       <label class="lf-row">
         <input type="checkbox" class="lf-check" data-path="${escapeHtml(f.path)}" />
         <span class="lf-rank">#${idx + 1}</span>
-        <span class="lf-size">${formatBytes(f.sizeBytes)}</span>
+        <span class="lf-size ${tier}">${formatBytes(f.sizeBytes)}</span>
         <span class="lf-name" title="${escapeHtml(f.path)}">${escapeHtml(f.path)}</span>
         <span class="lf-mod muted">${mod}</span>
       </label>`;
